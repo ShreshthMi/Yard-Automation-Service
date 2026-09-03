@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.5</version>
+		<relativePath />
+	</parent>
+
+	<groupId>com.frauscher.fse</groupId>
+	<artifactId>YardAutomationService</artifactId>
+	<version>1.0.0</version>
+	<name>YardAutomationService</name>
+	<description>UDP receiver for the FSE protocol - validates CRC, decodes
+		packets per protocol_definition.xlsx, and broadcasts per-yard status
+		over WebSocket</description>
+
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+		<!-- Reads protocol_definition.xlsx -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
+		<!-- Deliberately NOT adding log4j-core: POI pulls in log4j-api
+		transitively,
+             which prints a harmless "could not find a logging implementation, using
+             SimpleLogger" message at startup with no functional effect. Adding
+             log4j-core to silence it collides with the older log4j-api POI bundles
+             and throws NoClassDefFoundError (.../Lazy) instead. Leave it out. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>YardAutomationService</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

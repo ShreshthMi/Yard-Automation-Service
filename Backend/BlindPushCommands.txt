@@ -1,0 +1,15 @@
+
+How to run the simulator
+Simulator
+java -jar target/FSEsimulator.jar "C:/projects/ParserConfigs/protocol_definition.xlsx" 127.0.0.1 9000 
+
+
+How to run the yard automation receiver service
+
+cd YardAutomationService
+mvn clean package
+
+java -jar target/YardAutomationService.jar --app.protocol-definition-path="C:/projects/ParserConfigs/protocol_definition.xlsx" --app.audit-log-path="C:/projects/ParserConfigs/logs"
+
+
+

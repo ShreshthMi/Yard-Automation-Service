@@ -1,0 +1,14 @@
+# Maven build output
+target/
+dependency-reduced-pom.xml
+
+# Eclipse / IDE metadata
+.classpath
+.project
+.factorypath
+.settings/
+
+# Runtime output - audit trail and rejected-packet log (see logback-spring.xml)
+rejected-packets.log
+rejected-packets.*.log
+track-events-*.csv

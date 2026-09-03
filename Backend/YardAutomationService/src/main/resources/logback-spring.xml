@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Shared directory for both audit-style logs below (track-events CSVs and rejected-packets.log) -
+         override with app.audit-log-path=... at runtime. -->
+    <springProperty scope="context" name="auditLogPath" source="app.audit-log-path" defaultValue="."/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Dedicated appender for rejected packets, completely separate from the main app log. -->
+    <appender name="REJECTED_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${auditLogPath}/rejected-packets.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${auditLogPath}/rejected-packets.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- additivity=false: rejected-packet entries go ONLY to rejected-packets.log, not the console/root log too. -->
+    <logger name="REJECTED_PACKETS" level="INFO" additivity="false">
+        <appender-ref ref="REJECTED_FILE"/>
+    </logger>
+
+    <!--
+        Dedicated appender for the track-event audit trail (occupied/clear, ERR/CE
+        active/cleared) - one CSV file per day, at auditLogPath. TrackEventLogger
+        writes a header line ("dateTime,yardName,trackName,status,message1,message2")
+        once at startup; the pattern below is just the raw message, since the CSV
+        formatting (including the header) is built in Java, not here.
+
+        No <file> element here on purpose: with only a fileNamePattern, Logback
+        writes directly to today's dated file (track-events-2026-08-13.csv) from
+        the very first line, instead of an undated "track-events.csv" that only
+        picks up a date once it rolls over at midnight.
+    -->
+    <appender name="TRACK_EVENTS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${auditLogPath}/track-events-%d{yyyy-MM-dd}.csv</fileNamePattern>
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- additivity=false: track-event entries go ONLY to their own CSV, not the console/root log too. -->
+    <logger name="TRACK_EVENTS" level="INFO" additivity="false">
+        <appender-ref ref="TRACK_EVENTS_FILE"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

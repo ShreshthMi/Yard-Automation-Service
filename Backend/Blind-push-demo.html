@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Yard Automation - Blind Push Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+  if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"><\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"><\/script>');
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<style>
+  body { font-family: sans-serif; margin: 20px; background: #0a1628; color: #cbd5e1; }
+  h2 { margin-top: 0; color: #e8edf5; font-weight: 500; }
+  #controls { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  label { color: #a8b8d0; }
+  select { padding: 6px 8px; background: #132743; color: #e2e8f0; border: 1px solid #24406b; border-radius: 4px; }
+  button { padding: 6px 14px; cursor: pointer; background: #132743; color: #e2e8f0; border: 1px solid #24406b; border-radius: 4px; }
+  button:hover { background: #1c3a63; }
+  #status { font-weight: bold; padding: 3px 10px; border-radius: 4px; }
+  #status.connected { color: #4ade80; background: #0f2e1c; }
+  #status.disconnected { color: #f87171; background: #3a1414; }
+  #status.connecting { color: #fbbf24; background: #3a2a0a; }
+  #soundStatus { font-weight: bold; padding: 3px 10px; border-radius: 4px; }
+  #soundStatus.enabled { color: #4ade80; background: #0f2e1c; }
+  #soundStatus.disabled { color: #7c93b8; background: #1c2c42; }
+  #libWarning { display:none; background:#3a1414; color:#f87171; padding:10px 14px; border-radius:6px; margin-bottom:12px; font-weight:bold; }
+  #visualSection { margin: 16px 0 20px; }
+  #banner { border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; background: #334155; }
+  #banner.critical { animation: bannerPulse 1s ease-in-out infinite; }
+  #banner.error-lockout { background: repeating-linear-gradient(135deg, #7a0f0f, #7a0f0f 14px, #4a0808 14px, #4a0808 28px); border: 2px solid #ff4d4d; animation: errorPulse 0.9s ease-in-out infinite; }
+  #banner.error-lockout i { font-size: 34px; color: #ffdddd; }
+  .error-banner-title { font-weight: 800; font-size: 22px; color: #fff; letter-spacing: 0.5px; text-shadow: 0 0 8px rgba(255,77,77,0.9); }
+  .error-banner-subtitle { font-size: 14px; font-weight: 600; color: #ffd6d6; margin-top: 3px; }
+  @keyframes errorPulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,77,77,0); } 50% { box-shadow: 0 0 34px rgba(255,77,77,0.85); } }
+  #diagramArea { transition: opacity 0.3s ease; }
+  #diagramArea.locked { opacity: 0.22; filter: grayscale(1); pointer-events: none; }
+  @keyframes bannerPulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); transform: scale(1); } 50% { box-shadow: 0 0 26px rgba(255,255,255,0.55); transform: scale(1.015); } }
+  #markerRow, #trackRow, #labelRow { display: flex; gap: 3px; }
+  #markerRow { min-height: 30px; }
+  .marker-slot { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .marker-badge { background: #fbbf24; color: #241800; border: none; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 0 0 10px 2px rgba(251,191,36,0.7); animation: markerPulse 1.4s ease-in-out infinite; }
+  .marker-triangle { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #fbbf24; }
+  @keyframes markerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  #trainHint { font-size: 12px; color: #7c93b8; margin: 2px 0 0; }
+  #trainHint.forward { text-align: left; }
+  #trainHint.reverse { text-align: right; }
+  .track-segment { flex: 1; padding: 10px 6px 6px; text-align: center; box-sizing: border-box; }
+  .track-segment:first-child { border-radius: 8px 0 0 8px; }
+  .zone-label { font-size: 12px; font-weight: 500; }
+  #railStrip { position: relative; height: 22px; margin-top: -3px; }
+  .boundary-wall {
+    background-image: repeating-linear-gradient(45deg, #f5c518 0, #f5c518 8px, #14110a 8px, #14110a 16px);
+    border-left: 4px solid #f5c518;
+    border-top: 0.5px solid #f5c518;
+    border-bottom: 0.5px solid #f5c518;
+  }
+  #railStrip .rail { position: absolute; left: 0; right: 0; height: 2px; background: #4a5f80; }
+  #railStrip .sleepers { position: absolute; top: 2px; bottom: 2px; left: 0; right: 0; background-image: repeating-linear-gradient(90deg, #6a80a3 0px, #6a80a3 3px, transparent 3px, transparent 16px); }
+  .status-label { flex: 1; text-align: center; font-size: 11px; color: #7c93b8; }
+  #axleRow { display: flex; gap: 3px; margin-top: 4px; }
+  .axle-box { flex: 1; text-align: center; font-size: 13px; padding: 6px 0; background: #060f1e; border: 1px solid #1c3355; border-radius: 6px; color: #39ff6a; box-sizing: border-box; font-family: "Courier New", monospace; letter-spacing: 1px; font-variant-numeric: tabular-nums; text-shadow: 0 0 4px rgba(57,255,106,0.6); }
+  #warningRow { display: flex; gap: 3px; margin-bottom: 0; }
+  .warning-slot { flex: 1; display: flex; justify-content: flex-start; overflow: visible; }
+  .display-board { display: flex; flex-direction: column; align-items: flex-start; }
+  .flag-outer { background: #fff; clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%); padding: 1.5px; }
+  .flag-inner { background: #c1121f; clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%); padding: 4px 8px 4px 6px; display: flex; align-items: center; justify-content: flex-start; }
+  .display-board-text { font-family: Verdana, Arial, sans-serif; font-size: 6.5px; font-weight: 300; color: #fff; text-align: left; line-height: 1.3; letter-spacing: 0.2px; text-transform: uppercase; white-space: nowrap; }
+  #poleWrap { position: relative; display: flex; flex-direction: column; }
+  #poleOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; gap: 3px; pointer-events: none; }
+  .pole-line { width: 4px; background: #ffffff; }
+  #log { height: 380px; overflow-y: auto; background: #060f1e; color: #7fff7f; padding: 12px; font-family: "Courier New", monospace; font-size: 13px; border: 1px solid #1c3355; }
+  #log { border-radius: 6px; }
+  .entry { padding: 3px 0; }
+  .system { color: #6c84a8; }
+  .occupied { color: #ffb347; }
+  .clear { color: #7fff7f; }
+  #startOverlay { position: fixed; inset: 0; background: rgba(6,15,30,0.97); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer; text-align: center; padding: 20px; }
+  .start-overlay-box i { font-size: 48px; color: #fbbf24; }
+  .start-overlay-title { font-size: 20px; font-weight: 700; color: #e8edf5; margin-top: 14px; }
+  .start-overlay-subtitle { font-size: 13px; color: #7c93b8; margin-top: 8px; max-width: 360px; }
+</style>
+</head>
+<body>
+
+<div id="startOverlay" onclick="dismissStartOverlay()">
+  <div class="start-overlay-box">
+    <i class="ti ti-volume-2" aria-hidden="true"></i>
+    <div class="start-overlay-title">Click anywhere to enable sound alerts</div>
+    <div class="start-overlay-subtitle">Your browser requires one click before audio warnings can play - this is a one-time step.</div>
+  </div>
+</div>
+
+<h2>Yard Automation - Blind Push Demo</h2>
+
+<div id="libWarning">
+  SockJS/Stomp libraries failed to load from both CDNs. Check your internet connection, or that
+  cdnjs.cloudflare.com / cdn.jsdelivr.net aren't blocked by a firewall, ad-blocker, or privacy extension.
+</div>
+
+<div id="controls">
+  <label>Yard <select id="yardSelect"><option>Loading yards...</option></select></label>
+  <button onclick="clearLog()">Clear log</button>
+  <span id="soundStatus" class="disabled">Sound disabled</span>
+  <span id="status" class="disconnected">disconnected</span>
+</div>
+
+<div id="visualSection">
+  <div id="banner">
+    <span id="bannerTitle">Loading...</span>
+  </div>
+
+  <div id="diagramArea">
+    <div id="warningRow"></div>
+    <div id="poleWrap">
+      <div id="markerRow"></div>
+      <div id="trainHint" class="forward">train &rarr;</div>
+      <div id="poleOverlay"></div>
+    </div>
+    <div id="trackRow"></div>
+    <div id="railStrip">
+      <div class="rail" style="top:4px"></div>
+      <div class="rail" style="bottom:4px"></div>
+      <div class="sleepers"></div>
+    </div>
+    <div id="labelRow"></div>
+    <div id="axleRow"></div>
+  </div>
+</div>
+
+<div id="log"></div>
+
+<script>
+// Not shown in the UI on purpose - edit here if your service runs somewhere other than localhost:8080.
+const WS_URL = 'http://localhost:8080/ws';
+const HTTP_BASE = WS_URL.replace(/\/ws\/?$/, '');
+const RECONNECT_DELAY_MS = 3000;
+const LAST_ZONE_FLEX = 0.3; // the last (most critical) zone renders narrower than the others - halved again from 0.6
+const WALL_WIDTH_PX = 25;   // the boundary wall - a fixed narrow width, not proportional, it's a barrier not a track
+
+let stompClient = null;
+let currentSubscription = null;
+let selectedYard = null;
+let selectedYardName = null;
+let allYards = []; // full [{id, name}, ...] list from /api/yards, so we can look up a display name from an id
+let zonesForSelectedYard = null;
+let lastPayload = null;
+let lastCurrentMessage = null;
+let lastOccupiedState = {}; // identifier -> boolean, used to only log actual transitions
+let currentDirection = 'forward'; // sticky: flips based on peakActiveIndex tracking, see updateDirectionFromActiveIndex
+let peakActiveIndex = -1;         // highest active-zone index seen since the yard was last fully empty
+let audioCtx = null;
+let beepIntervalId = null;
+let alarmActive = false;              // true only while the last zone is actively being approached (not departure)
+let wasInErrorState = false;          // true while ANY zone currently has ERR or CE active - forces a UI-wide lockout
+let lastZoneDraining = false;         // true once the last zone's CATS is observed decreasing - stops the alarm immediately
+let lastCatsByIdentifier = {};        // identifier -> last observed CATS value, for trend detection
+let lastIncreaseTimeByIdentifier = {}; // identifier -> Date.now() of that identifier's last observed increase
+let reconnectTimer = null;
+
+window.onload = init;
+
+// Browsers require a real user gesture before audio can play at all. Rather than wait for
+// the alarm condition to happen and hope the user already clicked something, unlock audio
+// on the very first click or keypress anywhere on the page.
+function unlockAudioOnce() {
+  try {
+    ensureAudioContext().resume();
+  } catch (e) { /* handled properly the next time playBeep() actually runs */ }
+  document.removeEventListener('click', unlockAudioOnce);
+  document.removeEventListener('keydown', unlockAudioOnce);
+}
+document.addEventListener('click', unlockAudioOnce);
+document.addEventListener('keydown', unlockAudioOnce);
+
+// The page-wide click/keydown listener above only helps if you happen to click SOMETHING
+// before the first beep is needed. If you just load the page and watch packets arrive without
+// ever interacting with it, that never happens - every playBeep() call gets silently rejected
+// by the browser's autoplay policy for the entire session ("AudioContext was not allowed to
+// start"). This button removes the ambiguity: clicking it IS the required user gesture,
+// guaranteed, every time.
+function enableSound() {
+  const badge = document.getElementById('soundStatus');
+  try {
+    const ctx = ensureAudioContext();
+    ctx.resume().then(() => {
+      badge.textContent = 'Sound enabled';
+      badge.className = 'enabled';
+      logSystem('Sound enabled.');
+    }).catch(e => {
+      logSystem('Could not enable sound: ' + e.message);
+    });
+  } catch (e) {
+    logSystem('Could not enable sound: ' + e.message);
+  }
+}
+
+// The overlay covers the whole page on load - clicking ANYWHERE on it (not a small easy-to-miss
+// button) both unlocks audio and dismisses it in the same motion, so a real click happens as
+// close to immediately as this browser restriction allows.
+function dismissStartOverlay() {
+  enableSound();
+  const overlay = document.getElementById('startOverlay');
+  if (overlay) overlay.remove();
+}
+
+function init() {
+  fetch(HTTP_BASE + '/api/yards')
+    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+    .then(yards => {
+      if (yards.length === 0) {
+        document.getElementById('yardSelect').innerHTML = '<option>No yards configured</option>';
+        return;
+      }
+      populateYardDropdown(yards);
+      selectYard(yards[0].id);
+      connectWebSocket();
+    })
+    .catch(err => {
+      logSystem('Failed to load yard list from ' + HTTP_BASE + '/api/yards: ' + err.message);
+      document.getElementById('yardSelect').innerHTML = '<option>Failed to load yards</option>';
+    });
+}
+
+function populateYardDropdown(yards) {
+  allYards = yards;
+  const select = document.getElementById('yardSelect');
+  select.innerHTML = yards.map(y => '<option value="' + escapeHtml(y.id) + '">' + escapeHtml(y.name || y.id) + '</option>').join('');
+  select.onchange = () => {
+    selectYard(select.value);
+    resubscribe();
+  };
+}
+
+function selectYard(yardId) {
+  selectedYard = yardId;
+  const match = allYards.find(y => y.id === yardId);
+  selectedYardName = (match && match.name) ? match.name : yardId;
+  zonesForSelectedYard = null;
+  lastPayload = null;
+  lastCurrentMessage = null;
+  lastOccupiedState = {};
+  currentDirection = 'forward';
+  peakActiveIndex = -1;
+  lastCatsByIdentifier = {};
+  lastIncreaseTimeByIdentifier = {};
+  stopBeepAlarm();
+  alarmActive = false;
+  lastZoneDraining = false;
+  wasInErrorState = false;
+  document.getElementById('diagramArea').classList.remove('locked');
+  loadZones(yardId);
+  renderDiagram();
+}
+
+function loadZones(yardId) {
+  fetch(HTTP_BASE + '/api/yards/' + encodeURIComponent(yardId) + '/zones')
+    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+    .then(zones => {
+      if (yardId !== selectedYard) return; // user switched away before this arrived
+      zonesForSelectedYard = zones;
+      logSystem('Loaded ' + zones.length + ' zone(s) for ' + yardId + '.');
+      renderDiagram();
+    })
+    .catch(err => logSystem('Failed to load zones for ' + yardId + ': ' + err.message));
+}
+
+// ---- connection: auto-connect on load, auto-resubscribe on yard change, auto-reconnect on failure ----
+
+function connectWebSocket() {
+  if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+    document.getElementById('libWarning').style.display = 'block';
+    setStatus('libraries not loaded', 'disconnected');
+    return;
+  }
+  setStatus('connecting...', 'connecting');
+
+  const socket = new SockJS(WS_URL);
+  stompClient = Stomp.over(socket);
+  stompClient.debug = null;
+
+  stompClient.connect({}, () => {
+    setStatus('connected', 'connected');
+    logSystem('Connected to ' + WS_URL);
+    resubscribe();
+  }, () => {
+    setStatus('reconnecting...', 'connecting');
+    scheduleReconnect();
+  });
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return; // already scheduled
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectWebSocket();
+  }, RECONNECT_DELAY_MS);
+}
+
+function resubscribe() {
+  if (currentSubscription) {
+    try { currentSubscription.unsubscribe(); } catch (e) { /* connection may already be gone */ }
+    currentSubscription = null;
+  }
+  if (!selectedYard || !stompClient || !stompClient.connected) return;
+  currentSubscription = stompClient.subscribe('/topic/yard/' + selectedYard, (message) => {
+    handleIncoming(message.body);
+  });
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = cls;
+}
+
+// ---- incoming messages: track state, log only transitions, update the diagram ----
+
+function handleIncoming(body) {
+  let parsed;
+  try { parsed = JSON.parse(body); } catch (e) { return; }
+
+  lastPayload = parsed.payload || null;
+  lastCurrentMessage = parsed.currentMessage || null;
+
+  logTransitions();
+  trackCatsIncreases(zonesForSelectedYard, lastPayload);
+  renderDiagram();
+}
+
+function logTransitions() {
+  if (!zonesForSelectedYard || !lastPayload) return;
+  zonesForSelectedYard.forEach(z => {
+    const clr = extractClrForIdentifier(lastPayload, z.identifier);
+    if (clr === null) return; // identifier not present in this packet - nothing to report
+    const occupied = (clr === 0);
+    const previous = lastOccupiedState[z.identifier];
+    if (previous === undefined || previous !== occupied) {
+      logZoneEvent(z.zoneNumber, occupied);
+      // A single, one-off beep the moment ANY zone shows occupied, whether that's a genuine
+      // clear->occupied transition OR the very first reading we've ever seen for it (matters
+      // for zone 1 specifically: it's very likely already occupied by the time the browser's
+      // first packet arrives, so it never gets a "clear" baseline the way later zones do -
+      // requiring a prior baseline was silently swallowing zone 1's beep every time).
+      // Suppressed during an error lockout - the error alert is the only thing that should be
+      // sounding right now, not competing with an unrelated zone-entry notification.
+      if (occupied && !wasInErrorState) {
+        playBeep();
+      }
+    }
+    lastOccupiedState[z.identifier] = occupied;
+  });
+}
+
+// Tracks each identifier's own CATS history, used ONLY for the last-zone beep's 5-second
+// grace period (see beepTick) - direction is handled separately, see
+// updateDirectionFromActiveIndex, since with the physically-accurate "simulate train" model
+// multiple zones can legitimately move in OPPOSITE directions at the same time (one draining
+// while the next fills) - scanning every zone's individual trend and letting whichever one
+// happened to be processed last in the loop win caused the banner to flicker between the real
+// warning message and "departing" mid-handoff. A single signal (which zone is the current
+// leading edge) doesn't have that ambiguity.
+// Tracks each identifier's own CATS history - used for the last-zone alarm's 5-second grace
+// period (via lastIncreaseTimeByIdentifier), and specifically for the LAST zone, whether it's
+// currently draining (lastZoneDraining) - a real decrease there means the train is now
+// LEAVING that zone, not approaching it, so the alarm should stop immediately rather than
+// waiting out the grace period (which is meant for "paused mid-approach", not "departing").
+function trackCatsIncreases(zones, payload) {
+  if (!zones || !payload || zones.length === 0) return;
+  const now = Date.now();
+  const lastZoneId = zones[zones.length - 1].identifier;
+  zones.forEach(z => {
+    const cats = extractCatsForIdentifier(payload, z.identifier);
+    if (cats === null) return;
+    const previous = lastCatsByIdentifier[z.identifier];
+    if (previous !== undefined) {
+      if (cats > previous) {
+        lastIncreaseTimeByIdentifier[z.identifier] = now;
+        if (z.identifier === lastZoneId) lastZoneDraining = false;
+      } else if (cats < previous && z.identifier === lastZoneId) {
+        lastZoneDraining = true;
+      }
+    }
+    lastCatsByIdentifier[z.identifier] = cats;
+  });
+}
+
+// Direction from ONE unambiguous signal: the highest-index currently-occupied zone (the
+// train's leading edge, as far as anything can tell from the outside). While that index keeps
+// reaching new highs, the train is still advancing (forward). The moment it drops below its
+// own peak, the leading edge has receded - the train is genuinely departing (reverse) - no
+// matter what any other individual zone's count is doing at that same instant. Resets when the
+// yard goes fully empty, ready for the next train.
+function updateDirectionFromActiveIndex(zones, activeIndex) {
+  if (!zones) return;
+  if (activeIndex === -1) {
+    peakActiveIndex = -1;
+    currentDirection = 'forward';
+    return;
+  }
+  if (activeIndex > peakActiveIndex) {
+    peakActiveIndex = activeIndex;
+    currentDirection = 'forward';
+  } else if (activeIndex < peakActiveIndex) {
+    currentDirection = 'reverse';
+  }
+}
+
+function logZoneEvent(zoneNumber, occupied) {
+  const entry = document.createElement('div');
+  entry.className = 'entry ' + (occupied ? 'occupied' : 'clear');
+  const time = new Date().toLocaleTimeString();
+  entry.textContent = '[' + time + '] Zone ' + zoneNumber + ' is ' + (occupied ? 'occupied' : 'clear');
+  appendAndScroll(entry);
+}
+
+// ---- diagram rendering (banner + rail/sleeper track + train marker + axle counts) ----
+
+function renderDiagram() {
+  const zones = zonesForSelectedYard;
+  const activeIndex = zones ? findActiveIndex(zones, lastPayload) : -1;
+  const errorState = zones ? findErrorState(zones, lastPayload) : null;
+
+  updateDirectionFromActiveIndex(zones, activeIndex);
+  updateErrorLockout(errorState);
+
+  if (errorState) {
+    renderErrorBanner(errorState);
+  } else {
+    renderBanner(activeIndex, zones);
+  }
+  updateTrainHint();
+  updateAlarm(zones, activeIndex, errorState);
+
+  if (!zones) {
+    document.getElementById('markerRow').innerHTML = '';
+    document.getElementById('trackRow').innerHTML = '<div class="status-label">zones not loaded yet</div>';
+    document.getElementById('labelRow').innerHTML = '';
+    document.getElementById('axleRow').innerHTML = '';
+    document.getElementById('warningRow').innerHTML = '';
+    positionPoleLine(null);
+    return;
+  }
+
+  document.getElementById('warningRow').innerHTML = zones.map((z, i) => {
+    const flexStyle = (i === zones.length - 1) ? 'flex:' + LAST_ZONE_FLEX + ';justify-content:flex-start;' : '';
+    if (i !== zones.length - 1) return '<div class="warning-slot" style="' + flexStyle + '"></div>';
+    return '<div class="warning-slot" style="' + flexStyle + '">'
+      + '<div class="display-board">'
+      + '<div class="flag-outer"><div class="flag-inner"><div class="display-board-text">NO WAGON<br>BEYOND THIS POINT</div></div></div>'
+      + '</div></div>';
+  }).join('') + '<div class="warning-slot" style="flex:0 0 ' + WALL_WIDTH_PX + 'px"></div>';
+
+  positionPoleLine(zones);
+
+  document.getElementById('markerRow').innerHTML = zones.map((z, i) => {
+    const flexStyle = (i === zones.length - 1) ? ' style="flex:' + LAST_ZONE_FLEX + '"' : '';
+    if (i !== activeIndex) return '<div class="marker-slot"' + flexStyle + '></div>';
+    return '<div class="marker-slot"' + flexStyle + '>'
+      + '<div class="marker-badge"><i class="ti ti-train" aria-hidden="true"></i> Wagon</div>'
+      + '<div class="marker-triangle"></div>'
+      + '</div>';
+  }).join('') + '<div class="marker-slot" style="flex:0 0 ' + WALL_WIDTH_PX + 'px"></div>';
+
+  document.getElementById('trackRow').innerHTML = zones.map((z, i) => {
+    const clr = extractClrForIdentifier(lastPayload, z.identifier);
+    const occupied = clr === 0;
+    const bg = occupied ? z.color : '#16233d';
+    const textColor = occupied ? bestTextColor(z.color) : '#7c93b8';
+    const border = (i === activeIndex) ? 'border:2px solid #e8edf5;' : 'border:0.5px solid #24406b;';
+    const flexStyle = (i === zones.length - 1) ? 'flex:' + LAST_ZONE_FLEX + ';' : '';
+    return '<div class="track-segment" style="background:' + bg + ';color:' + textColor + ';' + border + flexStyle + '">'
+      + '<div class="zone-label">zone ' + z.zoneNumber + '</div></div>';
+  }).join('') + '<div class="track-segment boundary-wall" style="flex:0 0 ' + WALL_WIDTH_PX + 'px;border-radius:0 8px 8px 0;"></div>';
+
+  document.getElementById('labelRow').innerHTML = zones.map((z, i) => {
+    const clr = extractClrForIdentifier(lastPayload, z.identifier);
+    const text = (clr === null) ? 'unknown' : (clr === 0 ? 'occupied' : 'clear');
+    const color = (clr === 0) ? z.color : '#7c93b8';
+    const flexStyle = (i === zones.length - 1) ? 'flex:' + LAST_ZONE_FLEX + ';' : '';
+    return '<div class="status-label" style="color:' + color + ';font-weight:' + (clr === 0 ? '500' : '400') + ';' + flexStyle + '">' + text + '</div>';
+  }).join('') + '<div class="status-label" style="flex:0 0 ' + WALL_WIDTH_PX + 'px"></div>';
+
+  document.getElementById('axleRow').innerHTML = zones.map((z, i) => {
+    const cats = extractCatsForIdentifier(lastPayload, z.identifier);
+    const text = (cats === null) ? '-' : (cats + (cats === 1 ? ' axle' : ' axles'));
+    const flexStyle = (i === zones.length - 1) ? 'flex:' + LAST_ZONE_FLEX + ';' : '';
+    return '<div class="axle-box" style="' + flexStyle + '">' + text + '</div>';
+  }).join('') + '<div class="axle-box" style="flex:0 0 ' + WALL_WIDTH_PX + 'px;visibility:hidden;"></div>';
+}
+
+// Builds #poleOverlay using the EXACT same flex-column structure (same flex values, same
+// gap, same trailing wall width) that trackRow/warningRow/etc. all use - so the pole is
+// guaranteed to land exactly where the last zone actually starts, not an approximation of
+// it. An earlier version computed a percentage that ignored the small fixed-width wall
+// column, which is why it drifted out of alignment with the sign - same mechanism as
+// everything else it needs to line up with fixes that at the source instead of patching the
+// math. #poleOverlay is absolutely positioned (top:0/bottom:0/left:0/right:0) over #poleWrap,
+// so the pole itself still stretches to exactly fill that container's real height.
+function positionPoleLine(zones) {
+  const overlay = document.getElementById('poleOverlay');
+  if (!zones || zones.length === 0) {
+    overlay.innerHTML = '';
+    return;
+  }
+  overlay.innerHTML = zones.map((z, i) => {
+    if (i !== zones.length - 1) return '<div style="flex:1"></div>';
+    return '<div style="flex:' + LAST_ZONE_FLEX + '"><div class="pole-line" style="height:100%"></div></div>';
+  }).join('') + '<div style="flex:0 0 ' + WALL_WIDTH_PX + 'px"></div>';
+}
+
+// Dims/grays out and disables everything except the banner itself while any error is active,
+// and fires one beep the instant an error first appears (not repeated every render - only on
+// the transition into error). Clearing is symmetric: the moment errorState goes back to null,
+// the diagram un-dims immediately, no separate "resolved" step needed.
+function updateErrorLockout(errorState) {
+  const diagramArea = document.getElementById('diagramArea');
+  const nowInError = !!errorState;
+  if (nowInError) {
+    diagramArea.classList.add('locked');
+    if (!wasInErrorState) {
+      playBeep();
+    }
+  } else {
+    diagramArea.classList.remove('locked');
+  }
+  wasInErrorState = nowInError;
+}
+
+function renderErrorBanner(errorState) {
+  const banner = document.getElementById('banner');
+  banner.classList.remove('critical');
+  banner.classList.add('error-lockout');
+  const zoneList = formatZoneList(errorState.zoneNumbers);
+  const title = (errorState.type === 'CE')
+    ? 'Communication Error Detected in ' + zoneList
+    : 'Error Detected in ' + zoneList;
+  banner.innerHTML = '<i class="ti ti-alert-octagon" aria-hidden="true"></i>'
+    + '<div><div class="error-banner-title">' + escapeHtml(title) + '</div>'
+    + '<div class="error-banner-subtitle">Please rectify to continue.</div></div>';
+}
+
+function renderBanner(activeIndex, zones) {
+  const banner = document.getElementById('banner');
+  const cm = lastCurrentMessage;
+  banner.classList.remove('critical', 'error-lockout'); // only the active approach-warning below turns 'critical' back on
+
+  if (!cm) {
+    banner.style.background = '#334155';
+    banner.innerHTML = '<i class="ti ti-clock" aria-hidden="true"></i><span id="bannerTitle">Waiting for data from ' + escapeHtml(selectedYardName || '') + '...</span>';
+    return;
+  }
+  if (cm.error) {
+    banner.style.background = '#7F77DD';
+    banner.innerHTML = '<i class="ti ti-alert-circle" aria-hidden="true"></i>'
+      + '<div><div style="font-weight:500;font-size:15px;color:#fff">Configuration problem</div>'
+      + '<div style="font-size:13px;color:#EEEDFE">' + escapeHtml(cm.error) + '</div></div>';
+    return;
+  }
+  if (!cm.message) {
+    banner.style.background = cm.color || '#334155';
+    banner.innerHTML = '<i class="ti ti-circle-check" aria-hidden="true"></i><span style="font-weight:500;color:#0d1a2e">No train currently in ' + escapeHtml(selectedYardName || '') + '</span>';
+    return;
+  }
+
+  // A zone is occupied - but the configured message/warning (speed limits, "stop immediately",
+  // etc.) describes a train APPROACHING the boundary. Once it's actually leaving (reverse),
+  // those don't apply anymore - showing them would be actively misleading, not just unhelpful.
+  // Deliberately plain/calm styling here - the urgency below is only for a train still coming in.
+  if (currentDirection === 'reverse') {
+    const zoneNumber = (zones && activeIndex >= 0 && zones[activeIndex]) ? zones[activeIndex].zoneNumber : '?';
+    banner.style.background = '#334155';
+    banner.innerHTML = '<i class="ti ti-arrow-left" aria-hidden="true"></i>'
+      + '<span style="font-weight:500;color:#e2e8f0">Train departing - currently in zone ' + zoneNumber + '</span>';
+    return;
+  }
+
+  // A train is actively approaching - this is the one message a loco pilot genuinely must
+  // not miss, so it gets deliberately outsized, high-contrast, and animated treatment: large
+  // bold text and a slow pulsing glow to draw the eye, unlike every other (calmer) banner state.
+  const textColor = bestTextColor(cm.color);
+  banner.style.background = cm.color || '#334155';
+  banner.classList.add('critical');
+  banner.innerHTML = '<i class="ti ti-alert-triangle" style="color:' + textColor + ';font-size:34px;" aria-hidden="true"></i>'
+    + '<div><div style="font-weight:800;font-size:26px;color:' + textColor + ';letter-spacing:0.5px;line-height:1.2;">' + escapeHtml(cm.message) + '</div>'
+    + '<div style="font-size:18px;font-weight:600;color:' + textColor + ';margin-top:2px;">' + escapeHtml(cm.warning || '') + '</div></div>';
+}
+
+// ---- helpers mirroring the backend's own logic, so the marker lines up with currentMessage ----
+
+function findActiveIndex(zones, payload) {
+  let activeIndex = -1;
+  zones.forEach((z, i) => {
+    if (extractClrForIdentifier(payload, z.identifier) === 0) activeIndex = i;
+  });
+  return activeIndex;
+}
+
+// Every track occupied at once = the whole train is in the yard, about to leave the way it came in.
+function updateTrainHint() {
+  const hint = document.getElementById('trainHint');
+  if (currentDirection === 'reverse') {
+    hint.className = 'reverse';
+    hint.innerHTML = '&larr; train';
+  } else {
+    hint.className = 'forward';
+    hint.innerHTML = 'train &rarr;';
+  }
+}
+
+function extractClrForIdentifier(payload, identifier) {
+  if (!payload) return null;
+  const data = findByKey(payload, identifier);
+  if (!data || typeof data !== 'object') return null;
+  const status = data.status;
+  if (!status || typeof status !== 'object') return null;
+  const clr = status.CLR;
+  return (typeof clr === 'number') ? clr : null;
+}
+
+function extractBitForIdentifier(payload, identifier, bitName) {
+  if (!payload) return null;
+  const data = findByKey(payload, identifier);
+  if (!data || typeof data !== 'object') return null;
+  const status = data.status;
+  if (!status || typeof status !== 'object') return null;
+  const bit = status[bitName];
+  return (typeof bit === 'number') ? bit : null;
+}
+
+// ERR and CE take priority over everything else in the UI - scans every zone in the currently
+// selected yard, ERR checked first (across all zones) before CE, matching the same priority
+// the backend's audit trail uses. Returns the FIRST zone found in each case, not necessarily
+// the most advanced one - an error anywhere is equally urgent regardless of position.
+// ERR and CE take priority over everything else in the UI, and ERR as a whole category takes
+// priority over CE - if ANY zone has ERR active, every ERR zone is listed and CE is ignored
+// entirely for this render; CE is only shown when there's no ERR anywhere.
+function findErrorState(zones, payload) {
+  if (!zones || !payload) return null;
+
+  const errZones = zones.filter(z => extractBitForIdentifier(payload, z.identifier, 'ERR') === 1)
+      .map(z => z.zoneNumber);
+  if (errZones.length > 0) {
+    return { type: 'ERR', zoneNumbers: errZones };
+  }
+
+  const ceZones = zones.filter(z => extractBitForIdentifier(payload, z.identifier, 'CE') === 1)
+      .map(z => z.zoneNumber);
+  if (ceZones.length > 0) {
+    return { type: 'CE', zoneNumbers: ceZones };
+  }
+
+  return null;
+}
+
+// "Zone 3" / "Zones 2 and 3" / "Zones 2, 3, and 4"
+function formatZoneList(zoneNumbers) {
+  if (zoneNumbers.length === 1) return 'Zone ' + zoneNumbers[0];
+  if (zoneNumbers.length === 2) return 'Zones ' + zoneNumbers[0] + ' and ' + zoneNumbers[1];
+  const allButLast = zoneNumbers.slice(0, -1).join(', ');
+  return 'Zones ' + allButLast + ', and ' + zoneNumbers[zoneNumbers.length - 1];
+}
+
+// CATS lives alongside "status" (not inside it) - e.g. { status: {...}, CATS: 10, TL: 100 }.
+// Some identifiers (status-only slots, per the payload-definition sheet) have no CATS field
+// at all - that's not an error, just nothing to show, so this returns null for them.
+function extractCatsForIdentifier(payload, identifier) {
+  if (!payload) return null;
+  const data = findByKey(payload, identifier);
+  if (!data || typeof data !== 'object') return null;
+  const cats = data.CATS;
+  return (typeof cats === 'number') ? cats : null;
+}
+
+function findByKey(node, key) {
+  if (node && typeof node === 'object' && !Array.isArray(node)) {
+    if (Object.prototype.hasOwnProperty.call(node, key)) return node[key];
+    for (const v of Object.values(node)) {
+      const found = findByKey(v, key);
+      if (found !== null && found !== undefined) return found;
+    }
+  } else if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = findByKey(item, key);
+      if (found !== null && found !== undefined) return found;
+    }
+  }
+  return null;
+}
+
+function bestTextColor(hex) {
+  if (!hex) return '#2C2C2A';
+  const light = ['#FDD835', '#F9A825', '#B4B2A9'];
+  return light.includes(hex.toUpperCase()) ? '#2C2C2A' : '#fff';
+}
+
+// ---- log panel ----
+
+function logSystem(text) {
+  const entry = document.createElement('div');
+  entry.className = 'entry system';
+  const time = new Date().toLocaleTimeString();
+  entry.textContent = '[' + time + '] ' + text;
+  appendAndScroll(entry);
+}
+
+function appendAndScroll(entry) {
+  const log = document.getElementById('log');
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ---- alarm: loud repeating beep while the train is in the last (most critical) zone ----
+// Generated with the Web Audio API rather than an audio file - no external asset needed,
+// works fully offline. Browsers block audio until the page has had some user interaction
+// (e.g. clicking the mute checkbox, or the yard dropdown) - that's a browser security
+// restriction, not a bug here; the very first beep may be silent until you've clicked
+// something on the page once.
+
+function ensureAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+function playBeep() {
+  try {
+    const ctx = ensureAudioContext();
+    const fireTone = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square'; // buzzier / more attention-grabbing than a plain sine tone
+      osc.frequency.value = 1000;
+      gain.gain.setValueAtTime(0.7, ctx.currentTime); // loud
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    };
+    if (ctx.state === 'suspended') {
+      // Browsers keep new AudioContexts suspended until a real user gesture (click/keydown)
+      // has happened on the page - resume() only succeeds once that's occurred. Wait for it
+      // to actually complete before scheduling the tone, instead of firing blind.
+      ctx.resume().then(fireTone).catch(e => logSystem('Beep blocked by the browser: ' + e.message));
+    } else {
+      fireTone();
+    }
+  } catch (e) {
+    logSystem('Could not play beep: ' + e.message);
+  }
+}
+
+// Runs every 600ms while the train is in the last zone. Only actually sounds if that zone's
+// axle count increased within the last 5 seconds - a real wall-clock check (not just "did a
+// new packet arrive"), so it correctly falls silent even if packets stop coming in entirely.
+// The interval itself keeps running the whole time the train is in the last zone, so a fresh
+// increase later (still within that zone) makes it start beeping again automatically.
+// Every tick, re-checks BOTH that the train is still in the last zone AND that it's actually
+// draining right now (lastZoneDraining) - a real decrease there means departure, and the
+// alarm stops immediately rather than waiting out the 5-second grace period, which is meant
+// for "paused mid-approach", not "now leaving".
+function beepTick() {
+  if (!alarmActive || lastZoneDraining) return;
+  const zones = zonesForSelectedYard;
+  if (!zones || zones.length === 0) return;
+  const lastZoneId = zones[zones.length - 1].identifier;
+  const lastIncrease = lastIncreaseTimeByIdentifier[lastZoneId];
+  const withinGracePeriod = (lastIncrease !== undefined) && (Date.now() - lastIncrease < 5000);
+  if (withinGracePeriod) {
+    playBeep();
+  }
+}
+
+function startBeepAlarm() {
+  if (beepIntervalId) return; // already running
+  playBeep(); // always beep immediately on entering the last zone - no grace-period check on entry itself
+  beepIntervalId = setInterval(beepTick, 600);
+}
+
+function stopBeepAlarm() {
+  if (beepIntervalId) {
+    clearInterval(beepIntervalId);
+    beepIntervalId = null;
+  }
+}
+
+// Called every render. Alarms only while the train is BOTH in the last zone AND still
+// approaching it (not departing) - inLastZone alone isn't enough, since the last zone stays
+// "active" for a while as it drains during departure too, and no beep is wanted then.
+function updateAlarm(zones, activeIndex, errorState) {
+  const inLastZone = !!(zones && activeIndex >= 0 && activeIndex === zones.length - 1);
+  // Forced off while any error is active - the error IS the thing that matters right now.
+  const shouldAlarm = !errorState && inLastZone && currentDirection === 'forward';
+  if (shouldAlarm && !alarmActive) {
+    lastZoneDraining = false; // fresh entry into the last zone - not draining yet
+    startBeepAlarm();
+  } else if (!shouldAlarm && alarmActive) {
+    stopBeepAlarm();
+  }
+  alarmActive = shouldAlarm;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+  lastOccupiedState = {}; // so the very next message re-announces current state instead of staying silent
+}
+</script>
+
+</body>
+</html>
