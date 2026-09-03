@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.message-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+:host ::ng-deep .p-message {
+  width: fit-content;
+  max-width: 434px;
+  height: 34px;
+}
+::ng-deep .p-message-secondary.p-message-outlined {
+  outline-color: var(--p-frauscher-individual-basic-colors-grey-800);
+}
+::ng-deep .p-message-text {
+  color: var(--p-frauscher-individual-basic-colors-grey-600);
+  font-size: 14px;
+  font-weight: 200;
+}
+::ng-deep .p-message-icon {
+  color: var(--p-frauscher-individual-basic-colors-grey-600);
+  font-size: 18px;
+  font-weight: 200;
+}

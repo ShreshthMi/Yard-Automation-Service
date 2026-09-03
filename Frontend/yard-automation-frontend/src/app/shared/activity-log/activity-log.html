@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="activity-log.scss">@if (expanded()) {
+  <div class="activity-log-backdrop" (click)="onToggleExpand()"></div>
+}
+<div class="activity-log-card" [class.expanded]="expanded()">
+  <div class="activity-log-header">
+    <span class="activity-log-title">{{ title() }}</span>
+    @if (available()) {
+      <div class="activity-log-actions">
+        <i class="pi pi-trash" title="Clear logs" (click)="onDelete()"></i>
+        <i
+          class="pi"
+          [class.pi-arrow-up-right-and-arrow-down-left-from-center]="!expanded()"
+          [class.pi-arrow-down-left-and-arrow-up-right-to-center]="expanded()"
+          [title]="expanded() ? 'Collapse' : 'Expand'"
+          (click)="onToggleExpand()"
+        ></i>
+      </div>
+    }
+  </div>
+  <div class="activity-log-body" #logsContainer>
+    @if (!available()) {
+      <app-message>Details are not available due to lack of server connection</app-message>
+    } @else if (visibleLogs().length === 0) {
+      <app-message>No log available</app-message>
+    } @else {
+      <div class="activity-log-list">
+        @for (entry of visibleLogs(); track $index) {
+          <div class="activity-log-row" [class]="entry.severity">
+            <span class="activity-log-bar"></span>
+            <span class="activity-log-time">{{ entry.time }}</span>
+            <span class="activity-log-message">{{ entry.message }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

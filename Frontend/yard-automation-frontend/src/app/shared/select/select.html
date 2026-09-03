@@ -1,0 +1,21 @@
+<div class="select-container">
+  <div class="train-icon-badge">
+    <img src="assets/Icon Background.png" alt="" class="icon-background" />
+    <img src="assets/train.png" alt="" class="train-icon" />
+  </div>
+  <div class="select-wrapper">
+  <p-floatlabel variant="on">
+    <p-select
+      [ngModel]="value()"
+      (ngModelChange)="value.set($event)"
+      [inputId]="inputId()"
+      [options]="options()"
+      [optionLabel]="optionLabel()"
+      [optionValue]="optionValue()"
+      [placeholder]="placeholder()"
+      appendTo="body"
+    />
+    <label [for]="inputId()">{{ label() }}</label>
+  </p-floatlabel>
+  </div>
+</div>

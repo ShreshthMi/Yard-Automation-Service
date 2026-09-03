@@ -1,0 +1,82 @@
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-950);
+  position: fixed;
+  top: 0;
+  height: 3rem;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  height: 3rem;
+  text-align: left;
+  font-size: 1.5rem;
+  margin-left: 1rem;
+}
+
+.header-logo > img {
+  width: auto;
+  height: auto;
+  max-height: 2rem;
+}
+
+.fds-station {
+  font-size: 1.2rem;
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  padding: 0 0.7rem;
+  font-weight: 300;
+  font-family: var(--typography-font), sans-serif;
+  .sub-text {
+    font-size: 1rem;
+  }
+}
+.digital-clock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-family: var(--typography-font), sans-serif;
+  line-height: 1.2;
+  font-weight: 200;
+  .digital-clock-time {
+    font-size: 1.1rem;
+    font-weight: 300;
+  }
+  .digital-clock-date {
+    font-size: 0.8rem;
+  }
+}
+
+.pi-volume-up {
+  font-size: 1.1rem;
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+}
+
+// iPad portrait (Mini/Air/Pro 11") — screen-centered clock overlaps the title,
+// so fall back to flex flow where it centers in the space left after the logo.
+@media (max-width: 834px) and (orientation: portrait) {
+  .digital-clock {
+    position: static;
+    left: unset;
+    top: unset;
+    transform: none;
+    margin: 0 auto;
+
+    .digital-clock-time {
+      font-size: 1rem;
+    }
+    .digital-clock-date {
+      font-size: 0.7rem;
+    }
+  }
+}
+

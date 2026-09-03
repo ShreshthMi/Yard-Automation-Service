@@ -1,0 +1,70 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  FRONTEND_IMAGE: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+  FRONTEND_IMAGE_LATEST: $CI_REGISTRY_IMAGE/frontend:latest
+  BACKEND_IMAGE: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+  BACKEND_IMAGE_LATEST: $CI_REGISTRY_IMAGE/backend:latest
+
+build_frontend:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+    - docker-executor
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    # registry.gitlab.frauscher.app:5005 uses an internal CA that Kaniko's image doesn't trust by default
+    - cat /opt/ci/host-ca-certificates.crt >> /kaniko/ssl/certs/ca-certificates.crt
+    # Also drop the CA into the build context so the Dockerfile's node:20 stage can trust it too -
+    # that stage runs in its own image filesystem and can't see /opt/ci directly.
+    - cp /opt/ci/host-ca-certificates.crt "$CI_PROJECT_DIR/Frontend/yard-automation-frontend/frauscher-ca.crt"
+    - >
+      /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Frontend/yard-automation-frontend/Dockerfile"
+      --destination "$FRONTEND_IMAGE"
+      --destination "$FRONTEND_IMAGE_LATEST"
+      --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
+      --build-arg CI_API_V4_URL=$CI_API_V4_URL
+
+build_backend:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+    - docker-executor
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    # registry.gitlab.frauscher.app:5005 uses an internal CA that Kaniko's image doesn't trust by default
+    - cat /opt/ci/host-ca-certificates.crt >> /kaniko/ssl/certs/ca-certificates.crt
+    - >
+      /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Backend/Dockerfile"
+      --destination "$BACKEND_IMAGE"
+      --destination "$BACKEND_IMAGE_LATEST"
+      --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
+      --build-arg CI_API_V4_URL=$CI_API_V4_URL
+
+deploy_frontend:
+  stage: deploy
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST "$AZURE_WEBHOOK_URL_FRONTEND"
+  only:
+    - main
+
+deploy_backend:
+  stage: deploy
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST "$AZURE_WEBHOOK_URL_BACKEND"
+  only:
+    - main

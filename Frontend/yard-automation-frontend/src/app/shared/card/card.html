@@ -1,0 +1,29 @@
+<div class="card">
+  @if (title()) {
+    <div class="card-header">
+      <span class="card-title">{{ title() }}</span>
+      @if (showStatus() || showDirection()) {
+        <div class="card-status">
+          @if (showStatus()) {
+            <span class="status-indicator" [class.online]="online()" [class.offline]="!online()">
+              <span class="status-dot"></span>
+              {{ online() ? onlineLabel() : offlineLabel() }}
+            </span>
+            @if (online() && uptime()) {
+              <span class="status-uptime">Uptime: {{ uptime() }}</span>
+            }
+          }
+          @if (showDirection()) {
+            <span class="direction-indicator">
+              Direction: {{ direction() === 'forward' ? 'Forward' : 'Reverse' }}
+              <span class="direction-arrow">{{ direction() === 'forward' ? '→' : '←' }}</span>
+            </span>
+          }
+        </div>
+      }
+    </div>
+  }
+  <div class="card-body">
+    <ng-content></ng-content>
+  </div>
+</div>

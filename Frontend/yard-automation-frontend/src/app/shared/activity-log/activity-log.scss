@@ -1,0 +1,129 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.activity-log-backdrop {
+  position: fixed;
+  inset: 0;
+  //background: rgba(9, 20, 31, 0.6);
+  //backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+.activity-log-card {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 3px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-900);
+  overflow: hidden;
+
+  &.expanded {
+    position: fixed;
+    top: 6%;
+    left: 50%;
+    right: 1%;
+    bottom: 33%;
+    height: auto;
+    width: auto;
+    z-index: 1000;
+    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.activity-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.activity-log-title {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.8rem;
+  font-weight: 300;
+}
+
+.activity-log-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+
+  i {
+    cursor: pointer;
+    color: var(--p-frauscher-individual-basic-colors-grey-500);
+    font-size: 1rem;
+
+    &:hover {
+      color: var(--p-frauscher-individual-basic-colors-grey-50);
+    }
+  }
+}
+
+.activity-log-body {
+  flex: 1;
+  padding: 8px 16px;
+  overflow: hidden;
+
+  .expanded & {
+    overflow: auto;
+  }
+}
+
+.activity-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.activity-log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--typography-font);
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--p-frauscher-individual-basic-colors-grey-300);
+}
+
+.activity-log-bar {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-600);
+}
+
+.activity-log-row.critical .activity-log-bar {
+  background-color: var(--p-red-600, #e52027);
+}
+
+.activity-log-row.warning .activity-log-bar {
+  background-color: var(--p-yellow-500, #f9be04);
+}
+
+.activity-log-time {
+  color: var(--p-frauscher-individual-basic-colors-grey-500);
+  white-space: nowrap;
+}
+
+.activity-log-message {
+  color: var(--p-frauscher-individual-basic-colors-grey-500);
+}
+@media (max-width: 1024px) {
+  .activity-log-card {
+
+    &.expanded {
+      position: fixed;
+      top: 4.5%;
+    }
+  }
+}

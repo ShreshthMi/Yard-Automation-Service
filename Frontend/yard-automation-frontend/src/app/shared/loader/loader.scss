@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 20, 31, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+:host ::ng-deep .p-progressspinner {
+  width: 48px;
+  height: 48px;
+}
+
+:host ::ng-deep .p-progressspinner-circle {
+  stroke: var(--p-frauscher-individual-basic-colors-grey-50);
+  animation: p-progressspinner-dash 1.5s ease-in-out infinite;
+}
+
+.loader-message {
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.8rem;
+  font-weight: 300;
+}

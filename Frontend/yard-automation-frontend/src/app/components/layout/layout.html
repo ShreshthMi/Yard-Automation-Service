@@ -1,0 +1,51 @@
+<script src="layout.ts"></script>
+<div class="layout">
+  <div class="first-section">
+    <app-card title="YARD" height="100%" width="" [showStatus]="true" [online]="isOnline" [uptime]="uptime">
+      <app-select [options]="yards" optionLabel="name" label="Select a yard for live monitoring" [value]="selectedYard" (valueChange)="onYardSelected($event)"></app-select>
+    </app-card>
+    <app-activity-log [available]="showRecentActivityLog" [logs]="recentActivityLogs()"></app-activity-log>
+  </div>
+
+  <div class="second-section">
+    <app-card title="SYSTEM STATUS" height="100%" width="" class="system-status-card">
+      @if (systemStatusAlert) {
+        <app-alert></app-alert>
+      } @else if (systemStatusWarning) {
+        <app-warning [speedLimit]="speedLimit"></app-warning>
+      } @else if (systemStatusNoWarning) {
+        <app-no-warning></app-no-warning>
+      } @else {
+        <app-message>Details are not available at the moment.</app-message>
+      }
+    </app-card>
+    @if (isCameraLive) {
+      <app-yard-camera [isLive]="isCameraOnline" [trackZones]="trackZones" [camera1Src]="camera1Source" [camera2Src]="camera2Source">></app-yard-camera>
+    } @else {
+      <app-card title="YARD CAMERA" height="100%" width="" [showStatus]="true" [online]="isCameraOnline" onlineLabel="Live" offlineLabel="Offline">
+        <app-message>Camera service is currently unavailable.</app-message>
+      </app-card>
+    }
+  </div>
+
+  <div class="third-section">
+    <app-card title="YARD TRACK VIEW" height="100%" width="" [showDirection]="isTrackAvailable" [direction]="trackDirection()" class="yard-track-card">
+      @if (isTrackAvailable) {
+        <app-track [zones]="trackZones"></app-track>
+      } @else {
+        <app-message>Track Information Unavailable</app-message>
+      }
+    </app-card>
+  </div>
+
+  <div class="loader-section">
+    @if (isConnecting) {
+      <app-loader [message]="'Connecting to server...'" />
+    }
+  </div>
+  <div class="server-connection-error-section">
+    @if (connectionFailed) {
+      <app-server-connection-error (establishConnection)="onRetryConnection()" />
+    }
+  </div>
+</div>

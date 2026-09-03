@@ -1,0 +1,18 @@
+<div class="server-connection-error-overlay">
+  <div class="server-connection-error-card">
+    <div class="card-header">
+      <span class="card-title">{{ title() }}</span>
+    </div>
+    <div class="card-body">
+      <p class="description">{{ description() }}</p>
+      <ol class="steps-list">
+        @for (step of steps(); track step) {
+          <li>{{ step }}</li>
+        }
+      </ol>
+      <div class="actions">
+        <p-button [label]="buttonLabel()" severity="success" (onClick)="establishConnection.emit()" />
+      </div>
+    </div>
+  </div>
+</div>

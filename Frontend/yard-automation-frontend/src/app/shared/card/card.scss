@@ -1,0 +1,90 @@
+:host {
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.card {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 3px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-900);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.card-title {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.8rem;
+  font-weight: 300;
+}
+
+.card-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.75rem;
+  font-weight: 300;
+
+  &.online {
+    color: var(--p-green-500, #00a260);
+  }
+
+  &.offline {
+    color: var(--p-red-600, #e52027);
+  }
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.status-uptime {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-300);
+  font-size: 0.7rem;
+  font-weight: 300;
+}
+
+.direction-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--typography-font);
+  color: var(--p-green-500, #00a260);
+  font-size: 0.75rem;
+  font-weight: 300;
+}
+
+.direction-arrow {
+  font-weight: 500;
+}
+
+.card-body {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+}

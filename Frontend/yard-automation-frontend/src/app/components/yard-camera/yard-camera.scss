@@ -1,0 +1,249 @@
+:host {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.yard-camera-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.yard-camera {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 3px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-900);
+  overflow: hidden;
+
+  &.expanded {
+    position: fixed;
+    top: 6%;
+    left: 6%;
+    right: 6%;
+    bottom: 6%;
+    height: auto;
+    width: auto;
+    z-index: 1000;
+    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.4);
+
+    @media (max-width: 1024px) {
+      top: 15%;
+      bottom: 15%;
+      left: 1%;
+      right: 1%;
+    }
+  }
+}
+
+.yard-camera-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.yard-camera-title {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 8px;
+}
+
+.view-toggle-btn {
+  box-sizing: border-box;
+  border: 1px solid var(--p-frauscher-individual-basic-colors-grey-700);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--p-frauscher-individual-basic-colors-grey-300);
+  font-family: var(--typography-font);
+  font-size: 0.75rem;
+  font-weight: 400;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--p-frauscher-individual-basic-colors-grey-500);
+    color: var(--p-frauscher-individual-basic-colors-grey-50);
+  }
+
+  &.active {
+    background-color: var(--p-frauscher-individual-basic-colors-grey-700);
+    border-color: var(--p-frauscher-individual-basic-colors-grey-700);
+    color: var(--p-frauscher-individual-basic-colors-grey-50);
+  }
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 6px;
+  flex-shrink: 0;
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.75rem;
+  font-weight: 300;
+
+  &.online {
+    color: var(--p-green-500, #00a260);
+  }
+
+  &.offline {
+    color: var(--p-red-600, #e52027);
+  }
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.camera-stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  padding: 0 16px;
+  min-height: 0;
+}
+
+.track-overlay {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.track-overlay-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background-color: rgba(5, 9, 12, 0.75);
+  backdrop-filter: blur(2px);
+  font-family: var(--typography-font);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  .zone-name {
+    color: var(--p-frauscher-individual-basic-colors-grey-300);
+    text-transform: uppercase;
+  }
+
+  .zone-status {
+    text-transform: uppercase;
+  }
+
+  .zone-axles {
+    color: var(--p-frauscher-individual-basic-colors-grey-400);
+  }
+
+  &.clear .zone-status {
+    color: var(--p-green-500, #00a260);
+  }
+
+  &.occupied-warning .zone-status {
+    color: var(--p-frauscher-individual-semantic-colors-status-warning);
+  }
+
+  &.occupied-warning-alt .zone-status {
+    color: var(--p-frauscher-individual-semantic-colors-status-warning-hover);
+  }
+
+  &.occupied-danger .zone-status {
+    color: var(--p-frauscher-individual-semantic-colors-status-error, #e52027);
+  }
+}
+
+.camera-feed {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: #05090c;
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background-color: #05090c;
+  }
+}
+
+.camera-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: var(--p-frauscher-individual-basic-colors-grey-100, #e6e6e6);
+  font-family: var(--typography-font);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+
+  &.bottom {
+    top: auto;
+    bottom: 8px;
+  }
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 6px;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1px solid var(--p-frauscher-individual-basic-colors-grey-700);
+  border-radius: 50%;
+  background-color: transparent;
+  color: var(--p-frauscher-individual-basic-colors-grey-300);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--p-frauscher-individual-basic-colors-grey-500);
+    color: var(--p-frauscher-individual-basic-colors-grey-50);
+  }
+}

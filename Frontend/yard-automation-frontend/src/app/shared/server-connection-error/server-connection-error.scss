@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+
+.server-connection-error-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 20, 31, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+}
+
+.server-connection-error-card {
+  width: 470px;
+  border-radius: 6px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-900);
+  border: 1px solid var(--p-frauscher-individual-basic-colors-grey-850);
+  overflow: hidden;
+  box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  padding: 14px 20px;
+  background-color: var(--p-frauscher-individual-basic-colors-grey-950);
+}
+
+.card-title {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.card-body {
+  padding: 16px 20px 20px;
+}
+
+.description {
+  margin: 0 0 20px;
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 0.85rem;
+  font-weight: 300;
+}
+
+.steps-list {
+  margin: 0 0 20px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.steps-list li {
+  font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-300);
+  font-size: 0.8rem;
+  font-weight: 300;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+::ng-deep .p-button-success {
+  background-color: var(--p-button-primary-background);
+  color: var(--p-button-primary-text);
+  font-size: 0.9rem;
+  .p-button-label {
+    font-weight: 400 !important;
+  }
+}

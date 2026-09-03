@@ -1,0 +1,86 @@
+@if (expanded()) {
+  <div class="yard-camera-backdrop" (click)="onToggleExpand()"></div>
+}
+<div class="yard-camera" [class.expanded]="expanded()">
+  <div class="yard-camera-header">
+    <span class="yard-camera-title">Yard Camera</span>
+
+    <div class="view-toggle">
+      <button
+        type="button"
+        class="view-toggle-btn"
+        [class.active]="activeView() === 'split'"
+        (click)="setView('split')"
+      >
+        1 | 2
+      </button>
+      <button
+        type="button"
+        class="view-toggle-btn"
+        [class.active]="activeView() === 'cam1'"
+        (click)="setView('cam1')"
+      >
+        1
+      </button>
+      <button
+        type="button"
+        class="view-toggle-btn"
+        [class.active]="activeView() === 'cam2'"
+        (click)="setView('cam2')"
+      >
+        2
+      </button>
+    </div>
+
+    <span class="status-indicator" [class.online]="isLive()" [class.offline]="!isLive()">
+      <span class="status-dot"></span>
+      {{ isLive() ? 'Live' : 'Offline' }}
+    </span>
+  </div>
+
+  <div class="camera-stage">
+    @if (expanded() && trackZones().length) {
+      <div class="track-overlay">
+        @for (zone of trackZones(); track zone.name; let i = $index) {
+          <div
+            class="track-overlay-zone"
+            [class.clear]="zone.status === 'clear'"
+            [class.occupied-warning]="zone.status === 'occupied' && !zone.boundary && i === 0"
+            [class.occupied-warning-alt]="zone.status === 'occupied' && !zone.boundary && i !== 0"
+            [class.occupied-danger]="zone.status === 'occupied' && zone.boundary"
+          >
+            <span class="zone-name">{{ zone.name }}</span>
+            <span class="zone-status">{{ zone.status === 'occupied' ? 'OCCUPIED' : 'CLEAR' }}</span>
+            <span class="zone-axles">{{ zone.axleCount }} AXLES</span>
+          </div>
+        }
+      </div>
+    }
+    <div class="camera-feed" [hidden]="activeView() === 'cam2'">
+      <video #video1 [src]="camera1Src()" muted loop playsinline autoplay>
+      </video>
+      <span class="camera-label" [class.bottom]="expanded()">CAM 1</span>
+    </div>
+    <div class="camera-feed" [hidden]="activeView() === 'cam1'">
+      <video #video2 [src]="camera2Src()" muted loop playsinline autoplay>
+      </video>
+      <span class="camera-label" [class.bottom]="expanded()">CAM 2</span>
+    </div>
+  </div>
+
+  <div class="camera-controls">
+    <button type="button" class="control-btn" (click)="play()" aria-label="Play">
+      <i class="pi pi-play"></i>
+    </button>
+    <button type="button" class="control-btn" (click)="pause()" aria-label="Pause">
+      <i class="pi pi-pause"></i>
+    </button>
+    <button type="button" class="control-btn" (click)="onToggleExpand()" [attr.aria-label]="expanded() ? 'Collapse' : 'Expand'">
+      <i
+        class="pi"
+        [class.pi-arrow-up-right-and-arrow-down-left-from-center]="!expanded()"
+        [class.pi-arrow-down-left-and-arrow-up-right-to-center]="expanded()"
+      ></i>
+    </button>
+  </div>
+</div>

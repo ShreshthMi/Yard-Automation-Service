@@ -1,0 +1,202 @@
+:host {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.warning {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 3px solid var(--p-frauscher-individual-semantic-colors-status-warning);
+  border-radius: 3px;
+  padding: 24px;
+  gap: 24px;
+  background: radial-gradient(
+      ellipse 100% 75% at 55% 0%,
+      rgba(74, 62, 27, 0.90) 0%,
+      rgba(58, 53, 28, 0.70) 25%,
+      rgba(32, 37, 29, 0.45) 50%,
+      rgba(15, 25, 29, 0.15) 75%,
+      transparent 100%
+  ),
+  linear-gradient(
+      180deg,
+      #19252a 0%,
+      #0b1821 55%,
+      #021121 100%
+  );
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.speed-sign {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 7px solid var(--p-red-600, #e52027);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.speed-sign-value {
+  font-family: var(--typography-font);
+  color: #1a1a1a;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.warning-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.warning-title {
+  //font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-50);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.warning-subtitle {
+  //font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-semantic-colors-status-warning);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.warning-divider {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--p-frauscher-individual-semantic-colors-status-warning), transparent);
+}
+
+.warning-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.warning-action-label {
+  //font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-semantic-colors-status-warning);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.warning-action-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warning-action-list li {
+  //font-family: var(--typography-font);
+  color: var(--p-frauscher-individual-basic-colors-grey-100, #e6e6e6);
+  font-size: 0.85rem;
+  font-weight: 300;
+}
+
+//@media (max-width: 1024px) {
+//  .warning {
+//    padding: 6px 10px;
+//    gap: 0;
+//    max-height: none;
+//    height: 100%;
+//    flex-direction: row;
+//    align-items: stretch;
+//  }
+//
+//  /* LEFT COLUMN */
+//  .warning-header {
+//    display: flex;
+//    align-items: center;
+//    gap: 8px;
+//    flex: 0 0 48%;
+//    min-width: 0;
+//  }
+//
+//  .speed-sign {
+//    flex-shrink: 0;
+//    width: 28px;
+//    height: 28px;
+//    border-width: 3px;
+//  }
+//
+//  .speed-sign-value {
+//    font-size: 0.7rem;
+//  }
+//
+//  .warning-heading {
+//    gap: 2px;
+//    min-width: 0;
+//  }
+//
+//  .warning-title,
+//  .warning-subtitle {
+//    font-size: 0.65rem;
+//    letter-spacing: 0.4px;
+//    white-space: nowrap;
+//  }
+//
+//  /* COLUMN DIVIDER */
+//  .warning-divider {
+//    width: 1px;
+//    height: auto;
+//    align-self: stretch;
+//    flex-shrink: 0;
+//    margin: 3px 10px;
+//    background: var(--p-frauscher-individual-semantic-colors-status-warning);
+//  }
+//
+//  /* RIGHT COLUMN */
+//  .warning-body {
+//    display: flex;
+//    flex-direction: column;
+//    align-items: flex-start;
+//    justify-content: center;
+//    gap: 2px;
+//    flex: 1;
+//    min-width: 0;
+//  }
+//
+//  .warning-action-label {
+//    font-size: 0.55rem;
+//    letter-spacing: 0.4px;
+//    line-height: 1.2;
+//  }
+//
+//  .warning-action-list {
+//    display: flex;
+//    flex-direction: column;
+//    gap: 2px;
+//    margin: 0;
+//    padding-left: 12px;
+//  }
+//
+//  .warning-action-list li {
+//    font-size: 0.55rem;
+//    line-height: 1.2;
+//    white-space: nowrap;
+//  }
+//}

@@ -1,0 +1,84 @@
+<div class="track">
+  <div class="track-row zone-header-row">
+    @for (zone of zones(); track zone.name; let i = $index) {
+      <div
+        class="zone-cell zone-header"
+        [style.width.%]="zone.widthPercent"
+        [class.boundary]="zone.boundary"
+        [class.occupied-warning]="zone.status === 'occupied' && !zone.boundary && i === 0"
+        [class.occupied-warning-alt]="zone.status === 'occupied' && !zone.boundary && i !== 0"
+        [class.occupied-danger]="zone.status === 'occupied' && zone.boundary"
+      >
+        {{ zone.name }}
+      </div>
+    }
+  </div>
+
+<!--  <div class="track-row zone-spacer-row">-->
+<!--    @for (zone of zones(); track zone.name) {-->
+<!--      <div class="zone-cell zone-spacer" [style.width.%]="zone.widthPercent"></div>-->
+<!--    }-->
+<!--  </div>-->
+
+  <div class="track-row zone-rail-row">
+    <div class="rail-ties"></div>
+    @for (zone of zones(); track zone.name; let i = $index) {
+      <div class="zone-cell zone-rail" [style.width.%]="zone.widthPercent">
+        @if (zone.status === 'occupied') {
+          <div
+            class="occupied-overlay"
+            [class.warning]="!zone.boundary && i === 0"
+            [class.warning-alt]="!zone.boundary && i !== 0"
+            [class.danger]="zone.boundary"
+          ></div>
+          <span
+            class="wagon-badge"
+            [class.warning]="!zone.boundary && i === 0"
+            [class.warning-alt]="!zone.boundary && i !== 0"
+            [class.danger]="zone.boundary"
+          >WAGON</span>
+          @if (isDistanceVisible(zone.name)) {
+            <div
+              class="distance-indicator"
+              [class.warning]="!zone.boundary && i === 0"
+              [class.warning-alt]="!zone.boundary && i !== 0"
+              [class.danger]="zone.boundary"
+            >
+              &larr; {{ distanceMeters(i) }} meters &rarr;
+            </div>
+          }
+        }
+        @if (zone.boundary) {
+          <div class="no-wagon-indicator">
+            <i class="pi pi-ban"></i>
+            <span>No Wagon beyond this point</span>
+          </div>
+          <div class="hazard-stripe"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="track-row zone-status-row">
+    @for (zone of zones(); track zone.name; let i = $index) {
+      <div
+        class="zone-cell zone-status"
+        [style.width.%]="zone.widthPercent"
+        [class.clear]="zone.status === 'clear'"
+        [class.occupied-warning]="zone.status === 'occupied' && !zone.boundary && i === 0"
+        [class.occupied-warning-alt]="zone.status === 'occupied' && !zone.boundary && i !== 0"
+        [class.occupied-danger]="zone.status === 'occupied' && zone.boundary"
+      >
+        {{ zone.status === 'occupied' ? 'OCCUPIED' : 'CLEAR' }}
+      </div>
+    }
+  </div>
+
+  <div class="track-row zone-axle-row">
+    @for (zone of zones(); track zone.name) {
+      <div class="zone-cell zone-axle" [style.width.%]="zone.widthPercent">
+        {{ zone.axleCount }} AXLES
+      </div>
+    }
+  </div>
+</div>
