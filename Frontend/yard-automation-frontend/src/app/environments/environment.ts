@@ -1,11 +1,5 @@
-export interface Environment {
-  production: boolean;
-  apiUrl: string;
-  wsUrl: string;
-}
-
-export const environment: Environment = {
+export const environment = {
   production: false,
-  apiUrl: 'https://localhost:5001/api',
-  wsUrl: 'wss://localhost:5001/ws',
+  apiUrl: 'http://localhost:8080/api',
+  wsUrl: 'ws://localhost:8080/ws',
 };

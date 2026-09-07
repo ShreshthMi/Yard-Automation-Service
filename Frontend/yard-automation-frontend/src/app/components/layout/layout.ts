@@ -1,11 +1,13 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ToastService } from '../../services/toast/toast.service';
+import { InitialConnectionService } from '../../services/initial-connection/initial-connection.service';
 import { Card } from '../../shared/card/card';
 import {Message} from '../../shared/message/message';
 import { Select } from '../../shared/select/select';
 import {Loader} from '../../shared/loader/loader';
 import {ServerConnectionError} from '../../shared/server-connection-error/server-connection-error';
 import { ActivityLog } from '../../shared/activity-log/activity-log';
+import { InitialComponent } from '../../shared/initial-component/initial-component';
 import { NoWarning } from '../no-warning/no-warning';
 import { Warning } from '../warning/warning';
 import { Alert } from '../alert/alert';
@@ -13,7 +15,6 @@ import { YardCamera } from '../yard-camera/yard-camera';
 import { Track, TrackZone } from '../track/track';
 import { TrainDirectionService, TrainDirection } from '../../services/train-direction/train-direction.service';
 import { ActivityLogService } from '../../services/activity-log/activity-log.service';
-import { InitialConnectionService } from '../../services/initial-connection/initial-connection.service';
 import { WebsocketConnectionService } from '../../services/websocket-connection/websocket-connection.service';
 import { AudioService } from '../../services/audio/audio.service';
 
@@ -24,11 +25,11 @@ interface Yard {
 
 @Component({
   selector: 'app-layout',
-  imports: [Card, Message, Select, Loader, ServerConnectionError, ActivityLog, NoWarning, Warning, Alert, YardCamera, Track],
+  imports: [Card, Message, Select, Loader, ServerConnectionError, InitialComponent, ActivityLog, NoWarning, Warning, Alert, YardCamera, Track],
   templateUrl: './layout.html',
   styleUrl: './layout.scss',
 })
-export class Layout implements OnInit, OnDestroy {
+class Layout implements OnInit, OnDestroy {
 
   camera1Source = '';
   camera2Source = '';
@@ -37,43 +38,53 @@ export class Layout implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private trainDirectionService = inject(TrainDirectionService);
   private activityLogService = inject(ActivityLogService);
-  private initialConnectionService = inject(InitialConnectionService);
   private websocketConnectionService = inject(WebsocketConnectionService);
   private audioService = inject(AudioService);
+  private initialConnectionService = inject(InitialConnectionService);
 
   async ngOnInit(): Promise<void> {
     //this.toast.showSuccess('Yard 01 is now connected');
     //this.toast.showError('Failed to connect to yard. Please try again.');
     this.trainDirectionService.updateFromZones(this.trackZones);
-    await this.connectToSystem();
   }
 
   ngOnDestroy(): void {
     this.stopUptimeTimer();
   }
 
-  private async connectToSystem(): Promise<void> {
+  private async connectToSystem(yard: Yard): Promise<void> {
     this.isConnecting = true;
     this.connectionFailed = false;
     try {
-      const status = await this.initialConnectionService.getInitialConnection();
-      this.setOnlineStatus(status.connected);
-      //this.connectionFailed = !status.connected;
+      const status = await this.initialConnectionService.connect({
+        yard,
+        targetIpAddress: this.targetIpAddress,
+        // localIpAddress: this.localIpAddress,
+      });
       if (!status.connected) {
+        this.toast.showError(status.message || 'Failed to connect to yard. Please try again.');
         this.activityLogService.logConnectionError();
+        this.isConnecting = false;
+        this.showInitialPrompt = true;
         return;
       }
       this.activityLogService.logSystemConnected();
-      if (!this.selectedYard) {
-        this.activityLogService.logNoActiveWarnings();
-      }
+      this.selectedYard = yard;
+      this.connectWebsocket(
+        yard,
+        () => {
+          this.isConnecting = false;
+        },
+        () => {
+          this.isConnecting = false;
+          this.showInitialPrompt = true;
+        }
+      );
     } catch {
-      this.setOnlineStatus(false);
-      //this.connectionFailed = true;
       this.toast.showError('Failed to connect to yard. Please try again.');
       this.activityLogService.logConnectionError();
-    } finally {
       this.isConnecting = false;
+      this.showInitialPrompt = true;
     }
   }
 
@@ -113,18 +124,26 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   onRetryConnection(): void {
-    void this.connectToSystem();
+    if (this.initialYard) {
+      void this.connectToSystem(this.initialYard);
+    }
   }
 
-  private connectWebsocket(yardLabel: string): void {
+  private connectWebsocket(yard: Yard, onSuccess?: () => void, onError?: () => void): void {
     this.websocketConnectionService.connect((data) => this.handleWebsocketMessage(data))
       .then(() => {
         this.websocketConnected = true;
-        this.activityLogService.logYardConnected(yardLabel);
+        this.websocketConnectionService.send(yard);
+        this.setOnlineStatus(true);
+        this.activityLogService.logYardConnected(yard.name);
+        onSuccess?.();
       })
       .catch(() => {
         this.websocketConnected = false;
+        this.setOnlineStatus(false);
+        this.toast.showError('Failed to connect to yard. Please try again.');
         this.activityLogService.logConnectionError();
+        onError?.();
       });
   }
 
@@ -154,20 +173,29 @@ export class Layout implements OnInit, OnDestroy {
   }
   //Replace with API data
   yards: Yard[] = [
-    { name: 'Yard 01', code: '01' },
-    { name: 'Yard 02', code: '02' },
-    { name: 'Yard 03', code: '03' },
-    { name: 'Yard 04', code: '04' },
-    { name: 'Yard 05', code: '05' },
+    { name: 'Yard 01', code: '01' }
   ];
 
   selectedYard?: Yard;
 
   onYardSelected(yard: Yard | undefined): void {
     this.selectedYard = yard;
-    if (yard) {
-      this.connectWebsocket(yard.name);
+    // if (yard) {
+    //   this.connectWebsocket(yard);
+    // }
+  }
+
+  showInitialPrompt = true;
+  initialYard?: Yard;
+  targetIpAddress = '';
+  // localIpAddress = '';
+
+  onLaunchApplication(): void {
+    if (!this.initialYard) {
+      return;
     }
+    this.showInitialPrompt = false;
+    void this.connectToSystem(this.initialYard);
   }
 
   isOnline = false;
@@ -209,7 +237,10 @@ export class Layout implements OnInit, OnDestroy {
     return zone2?.status === 'occupied' ? 5 : 10;
   }
 
-  isCameraLive = true;
+  get isCameraLive(): boolean {
+    return !this.showInitialPrompt && !this.isConnecting;
+  }
+
   isCameraOnline = false;
 
   // Derived from per-zone axle counts by TrainDirectionService - see applyZoneUpdate().
@@ -266,3 +297,5 @@ export class Layout implements OnInit, OnDestroy {
   showRecentActivityLog = true;
   readonly recentActivityLogs = this.activityLogService.logs;
 }
+
+export default Layout

@@ -10,7 +10,6 @@
   justify-content: center;
   gap: 22px;
   width: 100%;
-  margin-left: 12px;
 }
 
 .train-icon-badge {
@@ -43,6 +42,10 @@
   width: 100%;
 }
 
+.select-wrapper--centered {
+  justify-content: center;
+}
+
 :host ::ng-deep .p-floatlabel {
   width: 100%;
   max-width: 260px;
@@ -60,6 +63,15 @@
   color: var(--p-frauscher-individual-basic-colors-grey-50);
   font-size: 14px;
   font-weight: 200;
+}
+
+:host ::ng-deep .p-select.p-invalid {
+  border-color: var(--p-frauscher-individual-semantic-colors-status-error);
+  outline-color: var(--p-frauscher-individual-semantic-colors-status-error);
+}
+
+::ng-deep .p-overlay {
+  z-index: 10000 !important;
 }
 
 ::ng-deep .p-select-overlay {

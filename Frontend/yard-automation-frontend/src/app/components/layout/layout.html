@@ -1,4 +1,3 @@
-<script src="layout.ts"></script>
 <div class="layout">
   <div class="first-section">
     <app-card title="YARD" height="100%" width="" [showStatus]="true" [online]="isOnline" [uptime]="uptime">
@@ -16,7 +15,7 @@
       } @else if (systemStatusNoWarning) {
         <app-no-warning></app-no-warning>
       } @else {
-        <app-message>Details are not available at the moment.</app-message>
+        <app-message>System Status is currently Unavailable</app-message>
       }
     </app-card>
     @if (isCameraLive) {
@@ -33,7 +32,7 @@
       @if (isTrackAvailable) {
         <app-track [zones]="trackZones"></app-track>
       } @else {
-        <app-message>Track Information Unavailable</app-message>
+        <app-message>Track Information is currently Unavailable</app-message>
       }
     </app-card>
   </div>
@@ -46,6 +45,18 @@
   <div class="server-connection-error-section">
     @if (connectionFailed) {
       <app-server-connection-error (establishConnection)="onRetryConnection()" />
+    }
+  </div>
+  <div class="initial-component-section">
+    @if (showInitialPrompt) {
+      <app-initial-component
+        [options]="yards"
+        optionLabel="name"
+        [value]="initialYard"
+        (valueChange)="initialYard = $event"
+        [(targetIpAddress)]="targetIpAddress"
+        (launchApplication)="onLaunchApplication()"
+      />
     }
   </div>
 </div>

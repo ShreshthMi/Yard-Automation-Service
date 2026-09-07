@@ -32,14 +32,14 @@ Then open `http://localhost:4200/`. The app reloads automatically on source chan
 Runtime API/WebSocket endpoints are set in `src/app/environments/environment.ts`:
 
 ```ts
-export const environment: Environment = {
+export const environment = {
   production: false,
-  apiUrl: 'https://localhost:5001/api',
-  wsUrl: 'wss://localhost:5001/ws',
+  apiUrl: 'http://localhost:8080/api',
+  wsUrl: 'ws://localhost:8080/ws',
 };
 ```
 
-Update `apiUrl` / `wsUrl` to point at your backend before running against a non-local environment.
+For production builds, `src/app/environments/environment.prod.ts` is swapped in automatically (via `fileReplacements` in `angular.json`) and uses relative `/api` / `/ws` paths, which `nginx.conf` proxies to the backend.
 
 ## Project structure
 

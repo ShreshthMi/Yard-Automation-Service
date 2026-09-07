@@ -1,9 +1,11 @@
 <div class="select-container">
-  <div class="train-icon-badge">
-    <img src="assets/Icon Background.png" alt="" class="icon-background" />
-    <img src="assets/train.png" alt="" class="train-icon" />
-  </div>
-  <div class="select-wrapper">
+  @if (showIcon()) {
+    <div class="train-icon-badge">
+      <img src="assets/Icon Background.png" alt="" class="icon-background" />
+      <img src="assets/train.png" alt="" class="train-icon" />
+    </div>
+  }
+  <div class="select-wrapper" [class.select-wrapper--centered]="!showIcon()">
   <p-floatlabel variant="on">
     <p-select
       [ngModel]="value()"
@@ -13,6 +15,7 @@
       [optionLabel]="optionLabel()"
       [optionValue]="optionValue()"
       [placeholder]="placeholder()"
+      [invalid]="invalid()"
       appendTo="body"
     />
     <label [for]="inputId()">{{ label() }}</label>

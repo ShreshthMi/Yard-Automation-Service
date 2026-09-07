@@ -9,7 +9,7 @@ export interface TrackZone {
 }
 
 const DISTANCE_VISIBLE_MS = 5000;
-const ZONE_DISTANCES_METERS = [300, 200, 100];
+const ZONE_DISTANCES_METERS = [300, 150, 30];
 
 @Component({
   selector: 'app-track',

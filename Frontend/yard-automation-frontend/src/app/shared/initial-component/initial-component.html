@@ -1,0 +1,56 @@
+<div class="initial-component-overlay">
+  <div class="initial-component-card">
+    <div class="card-header">
+      <span class="card-title">{{ title() }}</span>
+    </div>
+    <div class="card-body">
+      <p class="description">{{ description() }}</p>
+      <app-select
+        [options]="options()"
+        [optionLabel]="optionLabel()"
+        [optionValue]="optionValue()"
+        [label]="label()"
+        [placeholder]="placeholder()"
+        [value]="value()"
+        [invalid]="selectInvalid()"
+        [showIcon]="false"
+        (valueChange)="valueChange.emit($event)"
+      />
+      <div class="ip-fields">
+        <div class="ip-field-row">
+          <div class="ip-field-wrapper">
+            <p-floatlabel variant="on">
+              <input
+                pInputText
+                id="target-ip-address"
+                [ngModel]="targetIpAddress()"
+                (ngModelChange)="targetIpAddress.set($event)"
+                [invalid]="targetIpInvalid()"
+              />
+              <label for="target-ip-address">Target IP Address</label>
+            </p-floatlabel>
+          </div>
+        </div>
+        <!--
+        <div class="ip-field-row">
+          <div class="ip-field-wrapper">
+            <p-floatlabel variant="on">
+              <input
+                pInputText
+                id="local-ip-address"
+                [ngModel]="localIpAddress()"
+                (ngModelChange)="localIpAddress.set($event)"
+                [invalid]="localIpInvalid()"
+              />
+              <label for="local-ip-address">Local IP Address</label>
+            </p-floatlabel>
+          </div>
+        </div>
+        -->
+      </div>
+      <div class="actions">
+        <p-button [label]="buttonLabel()" severity="success" (onClick)="onLaunchClick()" />
+      </div>
+    </div>
+  </div>
+</div>

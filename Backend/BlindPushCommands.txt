@@ -11,5 +11,5 @@ mvn clean package
 
 java -jar target/YardAutomationService.jar --app.protocol-definition-path="C:/projects/ParserConfigs/protocol_definition.xlsx" --app.audit-log-path="C:/projects/ParserConfigs/logs"
 
-
+// outside container 
 

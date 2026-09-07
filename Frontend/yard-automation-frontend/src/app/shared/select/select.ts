@@ -16,6 +16,8 @@ export class Select {
   readonly label = input<string>('');
   readonly placeholder = input<string>('');
   readonly inputId = input<string>('app-select');
+  readonly invalid = input<boolean>(false);
+  readonly showIcon = input<boolean>(true);
 
   readonly value = model<any>(undefined);
 }
